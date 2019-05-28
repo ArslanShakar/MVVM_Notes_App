@@ -7,7 +7,7 @@ import android.arch.persistence.room.PrimaryKey;
 import java.util.Date;
 
 @Entity(tableName = "Note")
-public class Note {
+public class NoteEntity {
 
     @PrimaryKey(autoGenerate = true)
     private int noteId;
@@ -15,26 +15,22 @@ public class Note {
     private Date date;
 
     @Ignore
-    public Note() {
+    public NoteEntity() {
     }
 
     @Ignore
-    public Note(String note, Date date) {
+    public NoteEntity(String note, Date date) {
         this.note = note;
         this.date = date;
     }
 
-    public Note(int noteId, String note, Date date) {
+    public NoteEntity(int noteId, String note, Date date) {
         this(note, date);
         this.noteId = noteId;
     }
 
     public int getNoteId() {
         return noteId;
-    }
-
-    public void setNoteId(int noteId) {
-        this.noteId = noteId;
     }
 
     public Date getDate() {

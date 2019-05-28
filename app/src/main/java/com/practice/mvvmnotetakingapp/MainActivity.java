@@ -1,8 +1,10 @@
 package com.practice.mvvmnotetakingapp;
 
+import android.arch.lifecycle.Observer;
 import android.arch.lifecycle.ViewModelProviders;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -11,7 +13,7 @@ import android.view.MenuItem;
 import android.view.View;
 
 import com.practice.mvvmnotetakingapp.adapter.NoteAdapter;
-import com.practice.mvvmnotetakingapp.model.Note;
+import com.practice.mvvmnotetakingapp.model.NoteEntity;
 import com.practice.mvvmnotetakingapp.view_models.MainActivityViewModel;
 
 import java.util.ArrayList;
@@ -23,13 +25,15 @@ import butterknife.OnClick;
 
 public class MainActivity extends AppCompatActivity {
 
+    private static final String TAG = "MyTag";
     @BindView(R.id.layout_activity_main)
     View layout_main_activity;
     //ConstraintLayout layout_main_activity;
 
     @BindView(R.id.recyclerViewNotes)
     RecyclerView recyclerView;
-    private List<Note> arrayListNotes = new ArrayList<>();
+    private List<NoteEntity> mNotesArrayList = new ArrayList<>();
+    private NoteAdapter mNotesAdapter;
 
     @OnClick(R.id.fab_add_note)
     void fabAddNote() {
@@ -37,7 +41,7 @@ public class MainActivity extends AppCompatActivity {
         startActivity(intent);
     }
 
-    private MainActivityViewModel mainActivityViewModel;
+    private MainActivityViewModel viewModel;
 
 
     /*****************    onCreate  ********************/
@@ -56,25 +60,33 @@ public class MainActivity extends AppCompatActivity {
          */
         ButterKnife.bind(this);
 
-        mainActivityViewModel = ViewModelProviders.of(this).get(MainActivityViewModel.class);
-        arrayListNotes = mainActivityViewModel.notesList;
-
-        //arrayListNotes = SampleDataProvider.getSampleNotesData();
-
+        initViewModel();
         initRecyclerView();
+    }
+
+    /*****************    Init ViewModel  ********************/
+    private void initViewModel() {
+        Observer<List<NoteEntity>> notesObserver = new Observer<List<NoteEntity>>() {
+            @Override
+            public void onChanged(@Nullable List<NoteEntity> notes) {
+                mNotesArrayList.clear();
+                mNotesArrayList.addAll(notes);
+                if (mNotesAdapter == null) {
+                    mNotesAdapter = new NoteAdapter(MainActivity.this, mNotesArrayList);
+                    recyclerView.setAdapter(mNotesAdapter);
+                } else {
+                    mNotesAdapter.notifyDataSetChanged();
+                }
+            }
+        };
+        viewModel = ViewModelProviders.of(this).get(MainActivityViewModel.class);
+
+        viewModel.notesList.observe(MainActivity.this, notesObserver);
     }
 
     /*****************    Init RecyclerView  ********************/
     private void initRecyclerView() {
-        NoteAdapter adapter = new NoteAdapter(this, arrayListNotes);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        recyclerView.setAdapter(adapter);
-        adapter.notifyDataSetChanged();
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
     }
 
     /*****************      ********************/
@@ -89,7 +101,7 @@ public class MainActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.mAddSampleData:
-                getSampleData();
+                addSampleData();
                 return true;
             case R.id.mDeleteAllData:
                 deleteAllData();
@@ -100,13 +112,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void deleteAllData() {
+        viewModel.deleteAllData();
 
     }
 
-    private void getSampleData() {
-        mainActivityViewModel.addSampleData();
+    private void addSampleData() {
+        viewModel.addSampleData();
     }
     /*****************      ********************/
-
 
 }
